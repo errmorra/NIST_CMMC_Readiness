@@ -110,9 +110,10 @@ export default function Header({
 
       {/* Search */}
       <div className="relative">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" aria-hidden="true" />
         <input
-          type="text"
+          type="search"
+          aria-label="Search controls"
           placeholder="Search controls by keyword, ID, or topic (e.g. 'MFA', 'encryption', 'audit logs')…"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
