@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { CONTROLS } from "../data/controls";
 
 const STORAGE_KEY = "cmmc_assessment_state";
+const VALID_STATUSES = new Set(["Not Started", "In Progress", "Compliant"]);
 
 export function useAssessment() {
   const [statuses, setStatuses] = useState({});
@@ -14,7 +15,15 @@ export function useAssessment() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        setStatuses(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        // Only accept a plain object of known status values; ignore anything else.
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          const clean = {};
+          for (const [id, status] of Object.entries(parsed)) {
+            if (VALID_STATUSES.has(status)) clean[id] = status;
+          }
+          setStatuses(clean);
+        }
       }
     } catch (_) {
       // ignore parse errors
