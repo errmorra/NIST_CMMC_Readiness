@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Zap, FileText, RotateCcw, Download } from "lucide-react";
+import { Search, Zap, FileText, RotateCcw } from "lucide-react";
 
 export default function Header({
   searchQuery,
@@ -21,11 +21,11 @@ export default function Header({
     : "from-red-500 to-amber-400";
 
   return (
-    <header className="bg-slate-900 border-b border-slate-700/60 px-6 py-4 space-y-4">
+    <header className="bg-slate-900 border-b border-slate-700/60 px-4 sm:px-6 py-4 space-y-4">
       {/* Top row */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-white font-bold text-lg tracking-tight">
+          <h1 className="text-white font-bold text-base sm:text-lg tracking-tight">
             NIST SP 800-171 · CMMC Level 2
           </h1>
           <p className="text-slate-400 text-xs mt-0.5">
@@ -33,14 +33,15 @@ export default function Header({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Wizard / Compliance toggle */}
           <button
             type="button"
             onClick={onToggleMode}
             aria-pressed={wizardMode}
+            title="Switch between official control text and plain-language questions"
             className={`
-              flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200
+              flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200
               ${wizardMode
                 ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/40 hover:bg-indigo-500"
                 : "bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700"
@@ -59,15 +60,15 @@ export default function Header({
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 hover:text-red-400 hover:bg-red-950/40 border border-slate-700 hover:border-red-800/60 transition-all"
           >
             <RotateCcw size={12} />
-            Reset
+            <span className="hidden sm:inline">Reset</span>
           </button>
         </div>
       </div>
 
       {/* Progress section */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6 text-xs">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-x-5 gap-y-1 text-xs flex-wrap">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
               <span className="text-slate-400">Compliant</span>
@@ -122,6 +123,7 @@ export default function Header({
       <div className="relative">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" aria-hidden="true" />
         <input
+          id="control-search"
           type="search"
           aria-label="Search controls"
           placeholder="Search controls by keyword, ID, or topic (e.g. 'MFA', 'encryption', 'audit logs')…"
@@ -129,12 +131,12 @@ export default function Header({
           onChange={(e) => onSearchChange(e.target.value)}
           className="
             w-full bg-slate-800 border border-slate-700 rounded-lg
-            pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500
+            pl-9 pr-16 py-2.5 text-sm text-white placeholder-slate-500
             focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50
             transition-all
           "
         />
-        {searchQuery && (
+        {searchQuery ? (
           <button
             type="button"
             aria-label="Clear search"
@@ -143,6 +145,10 @@ export default function Header({
           >
             ✕
           </button>
+        ) : (
+          <kbd className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded border border-slate-600 bg-slate-900 text-slate-500 text-[11px] font-mono pointer-events-none">
+            /
+          </kbd>
         )}
       </div>
     </header>

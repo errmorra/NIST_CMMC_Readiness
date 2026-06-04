@@ -3,7 +3,7 @@
 import {
   Shield, BookOpen, ClipboardList, Settings, KeyRound,
   AlertTriangle, Wrench, HardDrive, Building2, Users,
-  Activity, CheckSquare, Network, Bug, ChevronRight,
+  Activity, CheckSquare, Network, Bug, ChevronRight, X,
 } from "lucide-react";
 
 const ICON_MAP = {
@@ -12,33 +12,16 @@ const ICON_MAP = {
   Activity, CheckSquare, Network, Bug,
 };
 
-const STATUS_COLORS = {
-  compliant:   "bg-emerald-500",
-  inProgress:  "bg-amber-400",
-  notStarted:  "bg-slate-600",
-};
-
-function FamilyPip({ compliant, inProgress, total }) {
-  if (total === 0) return null;
-  const notStarted = total - compliant - inProgress;
+export default function Sidebar({ families, selectedFamily, onSelectFamily, familyStats, open = false, onClose }) {
   return (
-    <div className="flex gap-0.5 items-center">
-      {compliant > 0 && (
-        <span className="text-[10px] font-bold text-emerald-400">{compliant}</span>
-      )}
-      {inProgress > 0 && (
-        <span className="text-[10px] font-bold text-amber-400 ml-0.5">{inProgress}</span>
-      )}
-      {notStarted > 0 && (
-        <span className="text-[10px] font-bold text-slate-500 ml-0.5">{notStarted}</span>
-      )}
-    </div>
-  );
-}
-
-export default function Sidebar({ families, selectedFamily, onSelectFamily, familyStats }) {
-  return (
-    <aside className="w-64 shrink-0 bg-slate-900 border-r border-slate-700/60 flex flex-col overflow-hidden">
+    <aside
+      className={`
+        fixed md:static inset-y-0 left-0 z-40 w-64 shrink-0
+        bg-slate-900 border-r border-slate-700/60 flex flex-col overflow-hidden
+        transform transition-transform duration-200 ease-out
+        ${open ? "translate-x-0 shadow-2xl shadow-black/50" : "-translate-x-full"} md:translate-x-0
+      `}
+    >
       {/* Logo */}
       <div className="px-5 py-5 border-b border-slate-700/60">
         <div className="flex items-center gap-2.5">
@@ -49,6 +32,15 @@ export default function Sidebar({ families, selectedFamily, onSelectFamily, fami
             <p className="text-white font-bold text-sm leading-tight tracking-wide">CMMC / NIST</p>
             <p className="text-slate-400 text-[10px] tracking-widest uppercase">Readiness Navigator</p>
           </div>
+          {/* Close button (mobile only) */}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close navigation menu"
+            className="md:hidden ml-auto p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          >
+            <X size={16} />
+          </button>
         </div>
       </div>
 
@@ -66,7 +58,9 @@ export default function Sidebar({ families, selectedFamily, onSelectFamily, fami
           return (
             <button
               key={f.code}
+              type="button"
               onClick={() => onSelectFamily(f.code)}
+              aria-current={isActive ? "true" : undefined}
               className={`
                 w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all duration-150
                 ${isActive
