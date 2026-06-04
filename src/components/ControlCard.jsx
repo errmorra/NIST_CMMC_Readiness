@@ -49,6 +49,7 @@ function StatusBadge({ status }) {
 export default function ControlCard({ control, status, onSetStatus, wizardMode, searchQuery }) {
   const [expanded, setExpanded] = useState(false);
   const cfg = STATUS_CONFIG[status];
+  const detailsId = `control-details-${control.id}`;
 
   // Highlight search matches
   function highlight(text) {
@@ -70,10 +71,20 @@ export default function ControlCard({ control, status, onSetStatus, wizardMode, 
         hover:border-opacity-80
       `}
     >
-      {/* Card header */}
+      {/* Card header (entire row toggles the details panel) */}
       <div
-        className="flex items-start gap-4 p-4 cursor-pointer select-none"
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
+        aria-controls={detailsId}
+        className="flex items-start gap-4 p-4 cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 rounded-xl"
         onClick={() => setExpanded((v) => !v)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setExpanded((v) => !v);
+          }
+        }}
       >
         {/* Status indicator strip */}
         <div className={`mt-1 w-1 h-12 rounded-full shrink-0 ${cfg.dot}`} />
@@ -84,7 +95,7 @@ export default function ControlCard({ control, status, onSetStatus, wizardMode, 
             <span className="font-mono text-xs font-bold text-sky-300 bg-sky-950/60 border border-sky-800/50 px-2 py-0.5 rounded">
               NIST {highlight(control.nistId)}
             </span>
-            <Link2 size={11} className="text-slate-600" />
+            <Link2 size={11} className="text-slate-600" aria-hidden="true" />
             <span className="font-mono text-xs font-bold text-indigo-300 bg-indigo-950/60 border border-indigo-800/50 px-2 py-0.5 rounded">
               {highlight(control.cmmcId)}
             </span>
@@ -108,15 +119,15 @@ export default function ControlCard({ control, status, onSetStatus, wizardMode, 
           )}
         </div>
 
-        {/* Expand chevron */}
-        <button className="shrink-0 text-slate-500 hover:text-slate-300 transition-colors mt-1">
+        {/* Expand chevron (decorative — whole header toggles) */}
+        <span aria-hidden="true" className="shrink-0 text-slate-500 transition-colors mt-1">
           {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
+        </span>
       </div>
 
       {/* Expanded body */}
       {expanded && (
-        <div className="px-4 pb-4 space-y-4 border-t border-slate-700/40 pt-4">
+        <div id={detailsId} className="px-4 pb-4 space-y-4 border-t border-slate-700/40 pt-4">
           {/* Crosswalk panel */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {/* NIST side */}
@@ -159,7 +170,7 @@ export default function ControlCard({ control, status, onSetStatus, wizardMode, 
           </div>
 
           {/* Status toggle buttons */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap" role="group" aria-label={`Set status for ${control.nistId}`}>
             <span className="text-[10px] font-bold tracking-widest text-slate-500 uppercase mr-1">
               Set Status:
             </span>
@@ -169,6 +180,8 @@ export default function ControlCard({ control, status, onSetStatus, wizardMode, 
               return (
                 <button
                   key={s}
+                  type="button"
+                  aria-pressed={isActive}
                   onClick={(e) => { e.stopPropagation(); onSetStatus(control.id, s); }}
                   className={`
                     px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150
@@ -188,13 +201,15 @@ export default function ControlCard({ control, status, onSetStatus, wizardMode, 
 
       {/* Quick status bar (collapsed only) */}
       {!expanded && (
-        <div className="px-4 pb-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        <div className="px-4 pb-3 flex items-center gap-2" role="group" aria-label={`Set status for ${control.nistId}`} onClick={(e) => e.stopPropagation()}>
           {STATUS_OPTIONS.map((s) => {
             const isActive = s === status;
             const optCfg = STATUS_CONFIG[s];
             return (
               <button
                 key={s}
+                type="button"
+                aria-pressed={isActive}
                 onClick={() => onSetStatus(control.id, s)}
                 className={`
                   px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all duration-150

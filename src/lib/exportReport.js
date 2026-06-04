@@ -25,7 +25,7 @@ export function exportReport(statuses, pct, stats) {
       compliant,
       inProgress,
       notStarted: controls.length - compliant - inProgress,
-      pct: Math.round((compliant / controls.length) * 100),
+      pct: controls.length > 0 ? Math.round((compliant / controls.length) * 100) : 0,
     };
   });
 
