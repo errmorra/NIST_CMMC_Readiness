@@ -1,14 +1,12 @@
 "use client";
 
-import { CheckCircle2, Clock, Circle, BarChart3 } from "lucide-react";
-
 export default function FamilyHeader({ familyName, familyCode, stats, controlCount }) {
   const { compliant, inProgress, notStarted, total } = stats ?? { compliant: 0, inProgress: 0, notStarted: 0, total: controlCount };
   const pct = total > 0 ? Math.round((compliant / total) * 100) : 0;
 
   return (
     <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4 mb-4">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[10px] font-bold tracking-widest text-slate-500 uppercase">Control Family</span>
@@ -41,13 +39,20 @@ export default function FamilyHeader({ familyName, familyCode, stats, controlCou
       </div>
 
       {/* Progress bar */}
-      <div className="mt-3 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+      <div
+        className="relative mt-3 h-1.5 bg-slate-700 rounded-full overflow-hidden"
+        role="progressbar"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`${familyName} compliance progress`}
+      >
         <div
-          className="h-full bg-amber-500/70 rounded-full transition-all duration-500"
+          className="absolute left-0 top-0 h-full bg-amber-500/70 rounded-full transition-all duration-500"
           style={{ width: `${((compliant + inProgress) / (total || 1)) * 100}%` }}
         />
         <div
-          className="h-full bg-emerald-500 rounded-full transition-all duration-500 -mt-1.5"
+          className="absolute left-0 top-0 h-full bg-emerald-500 rounded-full transition-all duration-500"
           style={{ width: `${(compliant / (total || 1)) * 100}%` }}
         />
       </div>
