@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Link2, CheckCircle2, Clock, Circle } from "lucide-react";
+import { ChevronDown, ChevronUp, Link2, CheckCircle2, Clock, Circle, StickyNote } from "lucide-react";
+import { getWeight, PARTIAL_CREDIT_IDS, SSP_GATE_ID } from "../data/sprsWeights";
 
 const STATUS_CONFIG = {
   "Compliant": {
@@ -35,6 +36,12 @@ const STATUS_CONFIG = {
 
 const STATUS_OPTIONS = ["Not Started", "In Progress", "Compliant"];
 
+const WEIGHT_STYLES = {
+  5: "text-red-300 bg-red-950/50 border-red-900/50",
+  3: "text-amber-300 bg-amber-950/50 border-amber-900/50",
+  1: "text-slate-400 bg-slate-800 border-slate-700",
+};
+
 function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status];
   const Icon = cfg.icon;
@@ -46,18 +53,39 @@ function StatusBadge({ status }) {
   );
 }
 
-export default function ControlCard({ control, status, onSetStatus, wizardMode, searchQuery }) {
+function SprsWeightBadge({ control }) {
+  const isSsp = control.id === SSP_GATE_ID;
+  const weight = getWeight(control.id);
+  const partial = PARTIAL_CREDIT_IDS.has(control.id);
+  const title = isSsp
+    ? "System Security Plan — required to conduct a DoD assessment; not itself point-scored."
+    : `SPRS deduction if not implemented: ${weight} point${weight > 1 ? "s" : ""}${partial ? " (3 points if partially implemented)" : ""}. DoD Assessment Methodology v1.2.1.`;
+  return (
+    <span
+      title={title}
+      className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded border cursor-help ${
+        isSsp ? "text-sky-300 bg-sky-950/50 border-sky-900/50" : WEIGHT_STYLES[weight]
+      }`}
+    >
+      {isSsp ? "SSP" : `−${weight}${partial ? "*" : ""} pts`}
+    </span>
+  );
+}
+
+export default function ControlCard({ control, status, onSetStatus, wizardMode, searchQuery, note, onSetNote }) {
   const [expanded, setExpanded] = useState(false);
   const cfg = STATUS_CONFIG[status];
   const detailsId = `control-details-${control.id}`;
+  const hasNote = Boolean(note && note.trim());
 
   // Highlight search matches
   function highlight(text) {
-    if (!searchQuery) return text;
-    const escaped = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const q = searchQuery?.trim();
+    if (!q) return text;
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const parts = text.split(new RegExp(`(${escaped})`, "gi"));
     return parts.map((part, i) =>
-      part.toLowerCase() === searchQuery.toLowerCase() ? (
+      part.toLowerCase() === q.toLowerCase() ? (
         <mark key={i} className="bg-sky-500/30 text-sky-200 rounded px-0.5">{part}</mark>
       ) : part
     );
@@ -99,9 +127,13 @@ export default function ControlCard({ control, status, onSetStatus, wizardMode, 
             <span className="font-mono text-xs font-bold text-indigo-300 bg-indigo-950/60 border border-indigo-800/50 px-2 py-0.5 rounded">
               {highlight(control.cmmcId)}
             </span>
-            <span className="text-[10px] text-slate-500 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+            <SprsWeightBadge control={control} />
+            <span className="text-[10px] text-slate-500 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 hidden sm:inline">
               {control.familyName}
             </span>
+            {hasNote && (
+              <StickyNote size={12} className="text-amber-400/80" aria-label="Has notes" />
+            )}
             <span className="ml-auto">
               <StatusBadge status={status} />
             </span>
@@ -169,6 +201,30 @@ export default function ControlCard({ control, status, onSetStatus, wizardMode, 
             </p>
           </div>
 
+          {/* Notes / evidence */}
+          <div className="bg-slate-900/40 rounded-lg p-3 border border-slate-700/30">
+            <label
+              htmlFor={`note-${control.id}`}
+              className="block text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-1.5"
+            >
+              Notes & Evidence
+            </label>
+            <textarea
+              id={`note-${control.id}`}
+              value={note ?? ""}
+              onChange={(e) => onSetNote(control.id, e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              placeholder="Record implementation details, evidence locations, policy references, POA&M items…"
+              rows={2}
+              className="
+                w-full bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-2
+                text-xs text-slate-200 placeholder-slate-600 leading-relaxed resize-y
+                focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-500/40
+                transition-all
+              "
+            />
+          </div>
+
           {/* Status toggle buttons */}
           <div className="flex items-center gap-2 flex-wrap" role="group" aria-label={`Set status for ${control.nistId}`}>
             <span className="text-[10px] font-bold tracking-widest text-slate-500 uppercase mr-1">
@@ -201,7 +257,7 @@ export default function ControlCard({ control, status, onSetStatus, wizardMode, 
 
       {/* Quick status bar (collapsed only) */}
       {!expanded && (
-        <div className="px-4 pb-3 flex items-center gap-2" role="group" aria-label={`Set status for ${control.nistId}`} onClick={(e) => e.stopPropagation()}>
+        <div className="px-4 pb-3 flex items-center gap-2 flex-wrap" role="group" aria-label={`Set status for ${control.nistId}`} onClick={(e) => e.stopPropagation()}>
           {STATUS_OPTIONS.map((s) => {
             const isActive = s === status;
             const optCfg = STATUS_CONFIG[s];

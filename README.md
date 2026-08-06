@@ -20,10 +20,15 @@ An **interactive crosswalk and readiness assessment tool** for the NIST SP 800-1
 | **Real-time Status Tracking** | Mark each control as `Not Started`, `In Progress`, or `Compliant` with one click |
 | **Progress Tracker** | Live overall compliance percentage with a color-coded progress bar at the top |
 | **Per-Family Progress** | Each sidebar entry and family header shows its own completion percentage |
-| **Global Search** | Instant keyword search across all 110 controls — by ID, text, or topic (e.g. "MFA", "encryption", "audit logs") |
-| **Persistent State** | Assessment progress is saved to `localStorage` — no backend required |
-| **JSON Export** | Download a full readiness report as structured JSON (suitable for SSP appendices or stakeholder reporting) |
-| **Reset** | Clear all statuses and start fresh with a single click |
+| **SPRS Score Calculator** | Live DoD Assessment Methodology (v1.2.1) score — starts at 110, deducts official 5/3/1-point weights per unimplemented control, with partial credit for MFA (3.5.3) and FIPS crypto (3.13.11) and an SSP (3.12.4) gate warning |
+| **Global Search** | Instant keyword search across all 110 controls — by ID, text, or topic (e.g. "MFA", "encryption", "audit logs") — press `/` to jump to the search box |
+| **Status Filters** | Filter the control list to Not Started / In Progress / Compliant, with live counts |
+| **Notes & Evidence** | Attach free-text notes (evidence locations, policy references, POA&M items) to any control |
+| **Persistent State** | Assessment progress and notes are saved to `localStorage` — no backend required |
+| **JSON / CSV Export** | Download a full readiness report as structured JSON (suitable for SSP appendices) or as CSV (spreadsheet / POA&M friendly) |
+| **Import** | Restore an assessment from a previously exported JSON report — back up, share, or move between machines |
+| **Responsive UI** | Sidebar collapses into a slide-out drawer on small screens |
+| **Reset** | Clear all statuses and notes and start fresh with a single click |
 
 ---
 
@@ -44,13 +49,14 @@ NIST_CMMC_Readiness/
 │   │   └── FamilyHeader.jsx    # Family summary stats bar
 │   │
 │   ├── data/
-│   │   └── controls.js         # All 110 controls — the single source of truth
+│   │   ├── controls.js         # All 110 controls — the single source of truth
+│   │   └── sprsWeights.js      # DoD Assessment Methodology v1.2.1 point weights
 │   │
 │   ├── hooks/
 │   │   └── useAssessment.js    # State management + localStorage persistence
 │   │
 │   └── lib/
-│       └── exportReport.js     # JSON report generation + download
+│       └── exportReport.js     # JSON/CSV report generation, download + import
 │
 ├── package.json
 ├── next.config.js
@@ -118,6 +124,7 @@ npm install lucide-react
 
 # 3. Copy the project files from this repo:
 #    src/data/controls.js
+#    src/data/sprsWeights.js
 #    src/hooks/useAssessment.js
 #    src/lib/exportReport.js
 #    src/components/Sidebar.jsx
@@ -186,9 +193,23 @@ Each control in `src/data/controls.js` follows this schema:
 
 ---
 
+## 📈 SPRS Score Calculator
+
+The header shows a live **SPRS score** computed per the *NIST SP 800-171 DoD Assessment Methodology, Version 1.2.1*:
+
+- You start at **110**; each control not marked `Compliant` deducts its official weight (**5**, **3**, or **1** points), so scores range from **−203 to 110**.
+- **MFA (3.5.3)** and **FIPS-validated cryptography (3.13.11)** get the methodology's built-in partial credit: marking them `In Progress` deducts 3 points instead of 5.
+- **The SSP (3.12.4)** carries no point value — but without one an official assessment cannot be conducted, so the header shows a **"No SSP"** warning until it is marked compliant.
+- Each control card shows its deduction weight (e.g. `−5 pts`); hover for details.
+- A score of **88+** may qualify for Conditional CMMC Level 2 status; **110** is required for final status.
+
+> Use this to estimate and plan. Your reportable SPRS score must come from a documented self-assessment against your SSP.
+
+---
+
 ## 🔄 Exported Report Format
 
-Clicking **Export JSON Report** downloads a structured file like:
+Clicking **JSON** downloads a structured file like:
 
 ```json
 {
@@ -200,6 +221,14 @@ Clicking **Export JSON Report** downloads a structured file like:
     "inProgress": 18,
     "notStarted": 46,
     "total": 110
+  },
+  "sprsScore": {
+    "score": 12,
+    "max": 110,
+    "min": -203,
+    "deducted": 98,
+    "sspMissing": false,
+    "methodology": "NIST SP 800-171 DoD Assessment Methodology v1.2.1"
   },
   "familySummary": [
     {
@@ -218,25 +247,27 @@ Clicking **Export JSON Report** downloads a structured file like:
       "cmmcId": "AC.L2-3.1.1",
       "family": "Access Control",
       "requirement": "Limit information system access...",
-      "status": "Compliant"
+      "sprsWeight": 5,
+      "status": "Compliant",
+      "note": "Enforced via Entra ID conditional access; see SSP §3.1."
     }
   ]
 }
 ```
 
-This report can be attached to your **System Security Plan (SSP)** or shared with a C3PAO assessor as a gap analysis artifact.
+This report can be attached to your **System Security Plan (SSP)** or shared with a C3PAO assessor as a gap analysis artifact. The same file can be re-imported later via the **Import** button to restore or share an assessment. A **CSV** export (one row per control, including SPRS weights and notes) is also available for spreadsheets and POA&M tracking.
 
 ---
 
 ## 🗺️ Roadmap / Future Enhancements
 
+- [x] **SPRS Score Calculator** — Supplier Performance Risk System score computation
+- [x] **Evidence Attachment** — attach notes, policy links, or screenshot references per control
 - [ ] **POA&M Generator** — auto-generate a Plan of Action & Milestones for non-compliant controls
-- [ ] **Evidence Attachment** — attach notes, policy links, or screenshot references per control
 - [ ] **Multi-user / Backend** — PostgreSQL + Prisma for team-based assessments
 - [ ] **PDF Export** — generate a formatted SSP-style PDF report
 - [ ] **CMMC Level 1 overlay** — add the 17 Level 1 practices as a separate view
 - [ ] **NIST 800-171A Assessment Objectives** — show the specific assessment methods per control
-- [ ] **SPRS Score Calculator** — Supplier Performance Risk System score computation
 - [ ] **Control Dependencies** — visualize which controls depend on others
 
 ---
